@@ -1,6 +1,6 @@
 class IssueCommentsController < ApplicationController
   before_action :find_issue, except: [:destroy_attachment]
-  # before_action :authorize
+  before_action :authorize, except: [:destroy_attachment]
 
   include IssueCommentsHelper
 
@@ -71,5 +71,9 @@ class IssueCommentsController < ApplicationController
     @project = @issue.project
   rescue ActiveRecord::RecordNotFound
     render_404
+  end
+
+  def authorize
+    deny_access unless User.current.allowed_to?(:set_notes_private, @project)
   end
 end
