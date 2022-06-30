@@ -19,6 +19,8 @@ describe Journal do
   if Redmine::Plugin.installed?(:redmine_limited_visibility)
     let!(:contractor_role) { Function.where(name: "Contractors").first_or_create }
     let!(:project_office_role) { Function.where(name: "Project Office").first_or_create }
+    let!(:function) { Function.first }
+    fixtures :functions
 
     describe "notified users" do
 
@@ -60,6 +62,42 @@ describe Journal do
 
     end
 
+    it "Update the JournalFunction table, when deleting a journal" do
+      journal = Journal.first
+      JournalFunction.create(journal_id: journal.id, function_id: function.id)
+      expect do
+        journal.destroy
+      end.to change { JournalFunction.count }.by(-1)
+    end
+
+    it "Update the PrivateNotesGroup table, when deleting a function" do
+      group = Function.last
+      PrivateNotesGroup.create(group_id: group.id, function_id: function.id)
+      PrivateNotesGroup.create(group_id: function.id, function_id: group.id)
+      expect do
+        function.destroy
+      end.to change { PrivateNotesGroup.count }.by(-2)
+    end
+
+  end
+
+  describe "Update the JournalRole table" do
+    let!(:journal) { Journal.first }
+    it "when deleting a role" do
+      role_test = Role.create!(:name => 'Test')
+      JournalRole.create(journal_id: journal.id, role_id: role_test.id)
+      expect do
+        role_test.destroy
+      end.to change { JournalRole.count }.by(-1)
+    end
+
+    it "when deleting a journal" do
+      role = Role.first
+      JournalRole.create(journal_id: journal.id, role_id: role.id)
+      expect do
+        journal.destroy
+      end.to change { JournalRole.count }.by(-1)
+    end
   end
 
 end
